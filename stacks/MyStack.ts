@@ -7,6 +7,8 @@ export function MyStack({ stack }: StackContext) {
       function: {
         environment: {
           MONGODB_URI: process.env.MONGODB_URI,
+          Auth0Domain: process.env.Auth0Domain,
+          Auth0ClientId: process.env.Auth0ClientId
         }
       }
     },
@@ -18,15 +20,18 @@ export function MyStack({ stack }: StackContext) {
 
   // Create auth provider
   const auth = new Auth(stack, "Auth", {
-    login: ["email"]
+    identityPoolFederation: {
+      auth0: {
+        domain: process.env.Auth0Domain,
+        clientId: process.env.Auth0ClientId,
+      },
+    },
   });
 
   auth.attachPermissionsForAuthUsers(stack, [api]);
 
   stack.addOutputs({
     ApiEndpoint: api.url,
-    UserPoolId: auth.userPoolId,
     IdentityPoolId: auth.cognitoIdentityPoolId,
-    UserPoolClientId: auth.userPoolClientId,
   });
 }
