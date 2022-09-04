@@ -1,18 +1,30 @@
-import { StackContext, Api, Auth } from "@serverless-stack/resources";
+import { StackContext, Api, Table, Auth } from "@serverless-stack/resources";
 
 export function MyStack({ stack }: StackContext) {
+  // Create the table
+  const table = new Table(stack, "Counter", {
+    fields: {
+      counter: "string",
+    },
+    primaryIndex: { partitionKey: "counter" },
+  });
+
   const api = new Api(stack, "api", {
     defaults: {
       authorizer: "iam",
       function: {
+        // Allow the API to access the table
+        permissions: [table],
         environment: {
-          MONGODB_URI: process.env.MONGODB_URI,
+          tableName: table.tableName,
+          // MONGODB_URI: process.env.MONGODB_URI,
         }
       }
     },
     routes: {
       "GET /": { function: "functions/lambda.handler", authorizer: "none", },
-      "GET /koro": "functions/koro.handler"
+      "GET /koro": "functions/koro.handler",
+      "POST /create": { function: "functions/dynamo.handler", authorizer: "none" },
     },
   });
 
